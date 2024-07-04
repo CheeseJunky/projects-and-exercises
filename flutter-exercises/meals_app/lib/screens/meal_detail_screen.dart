@@ -37,18 +37,51 @@ class MealDetailScreen extends ConsumerWidget {
                 ),
               );
             },
-            icon: Icon(isFav ? Icons.star : Icons.star_border),
+            // icon: Icon(isFav ? Icons.star : Icons.star_border),
+
+            // icon: AnimatedSwitcher(
+            //   duration: const Duration(milliseconds: 350),
+            //   transitionBuilder: ((child, animation) {
+            //     return RotationTransition(
+            //       turns: Tween<double>(
+            //         begin: 0.85,
+            //         end: 1,
+            //       ).animate(animation),
+            //       child: child,
+            //       );
+            //   }),
+            // child: Icon(
+            //   isFav ? Icons.star : Icons.star_border,
+            //   key: ValueKey(isFav),
+            //   ),
+
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              child: Icon(
+                isFav ? Icons.star : Icons.star_border,
+                key: ValueKey(isFav),
+              ),
+            ),
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Image.network(
-              meal.imageUrl,
-              height: 300,
-              width: double.infinity,
-              fit: BoxFit.cover,
+            Hero( // hero animates between screens
+              tag: meal.id,
+              child: Image.network(
+                meal.imageUrl,
+                height: 300,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(height: 10),
             Padding(

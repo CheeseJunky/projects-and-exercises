@@ -32,13 +32,16 @@ class MealItem extends StatelessWidget {
         onTap: () { onSelectMeal(meal); },
         child: Stack(   // shows items on top of each other
           children: [
-            FadeInImage(
-              placeholder: MemoryImage(kTransparentImage), 
-              image: NetworkImage(meal.imageUrl),
-              fit: BoxFit.cover,
-              height: 200,
-              width: double.infinity,
-              ),
+            Hero( // Hero animates widgets between screens
+              tag: meal.id,
+              child: FadeInImage(
+                placeholder: MemoryImage(kTransparentImage), 
+                image: NetworkImage(meal.imageUrl),
+                fit: BoxFit.cover,
+                height: 200,
+                width: double.infinity,
+                ),
+            ),
               Positioned(
                 bottom: 0,    // positioned on the bottom of the above fadeinimage
                 left: 0,      // stretching from left to right
