@@ -1,27 +1,42 @@
 import { Text, Image, StyleSheet, ScrollView } from "react-native";
-import { useLayoutEffect } from "react";
+import { useContext, useLayoutEffect } from "react";
 import MealQuickDetails from "../components/MealQuickDetails";
 import IconButton from "../components/IconButton";
+import { useDispatch, useSelector } from "react-redux";
+// import { FavoritesContext } from '../store/context/favourites-context';
+import { addFavourite, removeFavourite } from "../store/redux/favourites";
 
 function MealDetailScreen({ route, navigation }) {
     const mealObj = route.params.cMeal
 
-    function headerButtonPress () {
-        console.log("tapped inside")
+    // const favoriteMealsCtx = useContext(FavoritesContext);   // context api
+    // const mealIsFavourite = favoriteMealsCtx.ids.includes(mealObj.id)
+    const favouriteMealIds = useSelector((state) => state.favouriteMeals.ids);  // redux
+    const mealIsFavourite = favouriteMealIds.includes(mealObj.id)
+    const dispatch = useDispatch();
+    
+    function changeFavouriteStatus () {
+        if (mealIsFavourite) {
+            // favoriteMealsCtx.removeFavorite(mealObj.id)
+            dispatch(removeFavourite({ id: mealObj.id }));
+        } else {
+            // favoriteMealsCtx.addFavorite(mealObj.id)
+            dispatch(addFavourite({ id: mealObj.id }));
+        }
     }
     
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => {
                 return <IconButton 
-                    icon={"star"} 
+                    icon={ mealIsFavourite ? "star" : "star-outline" } 
                     color={"white"} 
-                    onTap={headerButtonPress} 
+                    onTap={changeFavouriteStatus} 
                 />
             },
             title: mealObj.title
         });
-    }, [navigation, headerButtonPress]);
+    }, [navigation, changeFavouriteStatus]);
 
     return <ScrollView style={styles.root}>
         <Image source={{ uri: mealObj.imageUrl }} style={styles.image} />
