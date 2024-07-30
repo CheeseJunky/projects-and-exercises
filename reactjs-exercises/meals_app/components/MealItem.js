@@ -1,17 +1,22 @@
 import { View, Text, Pressable, StyleSheet, Image } from "react-native"
+import { useNavigation } from "@react-navigation/native";
+import MealQuickDetails from "./MealQuickDetails";
+
 
 function MealItem ({mealObj}) {
+    const navigation = useNavigation()
+
+    function openMealDetails () {
+        navigation.navigate('MealDetailScreen', { cMeal: mealObj })
+    }
+
     return <View style={styles.mealItem}>
-        <Pressable android_ripple={{color: '#ccc'}}>
+        <Pressable android_ripple={{color: '#ccc'}} onPress={openMealDetails}>
             <View>
                 <Image source={{uri: mealObj.imageUrl}} style={styles.image}/>
                 <Text style={styles.title}>{mealObj.title}</Text>
             </View>
-            <View style={styles.infoBox}>
-                <Text style={styles.infoItem}>{mealObj.duration}m</Text>
-                <Text style={styles.infoItem}>{mealObj.complexity}</Text>
-                <Text style={styles.infoItem}>{mealObj.affordability}</Text>
-            </View>
+            <MealQuickDetails mealObj={mealObj}/>
         </Pressable>
     </View>
 }
@@ -35,15 +40,5 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         backgroundColor: '#FAFAFA',
         elevation: 4
-    },
-    infoBox: {
-        margin: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    infoItem: {
-        marginHorizontal: 6,
-        fontSize: 12
     }
 });
