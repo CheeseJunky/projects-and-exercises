@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
@@ -17,13 +21,37 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = "";
   var _enteredQuantity = 1;
   var _enteredCategory = categories[Categories.vegetables]!;
+  var _reqInProgress = false;
 
-  void saveItem() {
+  void saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+
+      setState(() {
+        _reqInProgress = true;
+      });
+
+      final url = Uri.https('flutter-test-17302-default-rtdb.europe-west1.firebasedatabase.app', 'shopping-list.json');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': _enteredName,
+          'quantity': _enteredQuantity,
+          'category': _enteredCategory.title
+        }),
+      );
+
+      final Map<String, dynamic> resposeData = json.decode(response.body);
+
+      if (!context.mounted) {
+        return;
+      }
+      
       Navigator.of(context).pop(
         GroceryItem(
-            id: DateTime.now().toString(),
+            id: resposeData['name'],
             name: _enteredName,
             quantity: _enteredQuantity,
             category: _enteredCategory),
@@ -119,15 +147,17 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
+                    onPressed: _reqInProgress ? null : () {
                       _formKey.currentState!.reset();
                     },
                     child: const Text("Reset"),
                   ),
                   const SizedBox(width: 5),
                   ElevatedButton(
-                    onPressed: saveItem,
-                    child: const Text("Add Item"),
+                    onPressed: _reqInProgress ? null : saveItem,  // disable press with null
+                    child: _reqInProgress 
+                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator()) 
+                      : const Text("Add Item"),
                   ),
                 ],
               ),
