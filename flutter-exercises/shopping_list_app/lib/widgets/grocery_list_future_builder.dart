@@ -8,6 +8,8 @@ import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
 import 'package:shopping_list_app/widgets/new_item.dart';
 
+// NOTE: add and remove doesnt work, this is just a demo for loading the body with FutureBuilder
+
 class GroceryList extends StatefulWidget {
   const GroceryList({super.key});
 
@@ -17,35 +19,27 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _shoppingList = [];
-  String _error = "";
-
-  var _isLoading = true;
+  late Future<List<GroceryItem>> _fLoadedItems;
 
   @override
   void initState() {
     super.initState();
 
-    loadShoppingListItems();
+    _fLoadedItems = loadShoppingListItems();
   }
 
-  void loadShoppingListItems() async {
+  Future<List<GroceryItem>> loadShoppingListItems() async {
     final url = Uri.https(
         'flutter-test-17302-default-rtdb.europe-west1.firebasedatabase.app',
         'shopping-list.json');
 
     final response = await http.get(url);
     if (response.statusCode >= 400) {
-      setState(() {
-        _error = "Failed to fetch data";
-      });
+      throw Exception("Server error");
     }
 
     if (response.body == 'null') {
-      // firebase returns 'null' on error
-      setState(() {
-        _isLoading = false;
-      });
-      return;
+      return [];
     }
 
     final Map<String, dynamic> listData = json.decode(response.body);
@@ -62,10 +56,7 @@ class _GroceryListState extends State<GroceryList> {
           category: tmpCategory));
     }
 
-    setState(() {
-      _shoppingList = httpItems;
-      _isLoading = false;
-    });
+    return httpItems;
   }
 
   void addNewItem() async {
@@ -112,39 +103,6 @@ class _GroceryListState extends State<GroceryList> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = const Center(
-      child: Text("No items to display"),
-    );
-
-    if (_isLoading) {
-      content = const Center(child: CircularProgressIndicator());
-    }
-
-    if (_shoppingList.isNotEmpty) {
-      content = ListView.builder(
-        itemCount: _shoppingList.length,
-        itemBuilder: (ctx, index) => Dismissible(
-          key: ValueKey(_shoppingList[index].id),
-          onDismissed: (direction) {
-            removeItem(_shoppingList[index]);
-          },
-          child: ListTile(
-            title: Text(_shoppingList[index].name),
-            leading: Container(
-              width: 4,
-              height: 24,
-              color: _shoppingList[index].category.color,
-            ),
-            trailing: Text(_shoppingList[index].quantity.toString()),
-          ),
-        ),
-      );
-    }
-
-    if (_error != "") {
-      content = Center(child: Text(_error));
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Groceries"),
@@ -155,7 +113,42 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ],
       ),
-      body: content,
+      body: FutureBuilder(
+        future: _fLoadedItems,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          }
+
+          if (snapshot.data!.isEmpty) {
+            const Center(child: Text("No items to display"));
+          } 
+            final _shoppingList = snapshot.data!;
+           return  ListView.builder(
+              itemCount: _shoppingList.length,
+              itemBuilder: (ctx, index) => Dismissible(
+                key: ValueKey(_shoppingList[index].id),
+                onDismissed: (direction) {
+                  removeItem(_shoppingList[index]);
+                },
+                child: ListTile(
+                  title: Text(_shoppingList[index].name),
+                  leading: Container(
+                    width: 4,
+                    height: 24,
+                    color: _shoppingList[index].category.color,
+                  ),
+                  trailing: Text(_shoppingList[index].quantity.toString()),
+                ),
+              ),
+            );
+          
+        },
+      ),
     );
   }
 }
