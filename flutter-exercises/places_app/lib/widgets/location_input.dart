@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:places_app/models/place.dart';
+import 'package:places_app/widgets/map_display.dart';
 
 class LocationInput extends StatefulWidget {
-  const LocationInput({super.key});
+  const LocationInput({
+    super.key,
+    required this.onLocationSelected,
+  });
+
+  final void Function(PlaceLocation location) onLocationSelected;
 
   @override
   State<LocationInput> createState() {
@@ -11,7 +18,8 @@ class LocationInput extends StatefulWidget {
 }
 
 class _LocationInputState extends State<LocationInput> {
-  Location? selectedLocation;
+  LocationData? selectedLocation;
+  PlaceLocation? cLocation;
   var isLocating = false;
 
   void getCurrentLocation() async {
@@ -45,10 +53,14 @@ class _LocationInputState extends State<LocationInput> {
 
     setState(() {
       isLocating = false;
+      selectedLocation = locationData;
+      cLocation = PlaceLocation(
+        lat: selectedLocation!.latitude!,
+        long: selectedLocation!.longitude!,
+        alt: selectedLocation!.altitude!,
+      );
     });
-
-    print(locationData.longitude);
-    print(locationData.latitude);
+    widget.onLocationSelected(cLocation!);
   }
 
   @override
@@ -63,6 +75,10 @@ class _LocationInputState extends State<LocationInput> {
 
     if (isLocating) {
       content = const CircularProgressIndicator();
+    }
+
+    if (selectedLocation != null) {
+      content = MapDisplay(location: cLocation!);
     }
 
     return Column(
@@ -88,7 +104,7 @@ class _LocationInputState extends State<LocationInput> {
               label: const Text("Get current location"),
             ),
             TextButton.icon(
-              onPressed: () {},
+              onPressed: null,
               icon: const Icon(Icons.map),
               label: const Text("Select on map"),
             ),

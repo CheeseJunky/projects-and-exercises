@@ -34,7 +34,14 @@ class PlacesList extends StatelessWidget {
           places[index].title,
           style: Theme.of(context)
               .textTheme
-              .titleMedium!
+              .titleLarge!
+              .copyWith(color: Colors.white70),
+        ),
+        subtitle: Text(
+          "Lat: ${places[index].location.lat} Long: ${places[index].location.long}",
+          style: Theme.of(context)
+              .textTheme
+              .titleSmall!
               .copyWith(color: Colors.white70),
         ),
         onTap: () {

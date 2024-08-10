@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:places_app/models/place.dart';
 import 'package:places_app/providers/places_provider.dart';
 import 'package:places_app/widgets/image_input.dart';
 import 'package:places_app/widgets/location_input.dart';
@@ -17,11 +18,12 @@ class AddPlaceScreen extends ConsumerStatefulWidget {
 class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   final _titleController = TextEditingController();
   File? selectedImage;
+  PlaceLocation? selectedLocation;
 
   void addNewPlace() {
     final inputText = _titleController.text;
 
-    if (inputText.isEmpty || selectedImage == null) {
+    if (inputText.isEmpty || selectedImage == null || selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Invalid title or image"),
         duration: Duration(seconds: 2),
@@ -29,7 +31,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       return;
     }
 
-    ref.read(placesProvider.notifier).addPlace(inputText, selectedImage!);
+    ref.read(placesProvider.notifier).addPlace(inputText, selectedImage!, selectedLocation!);
     Navigator.of(context).pop();
   }
 
@@ -62,7 +64,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               },
             ),
             const SizedBox(height: 10),
-            const LocationInput(),
+            LocationInput(
+              onLocationSelected: (location) {
+                selectedLocation = location;
+              },
+            ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: addNewPlace,
