@@ -39,7 +39,6 @@ class PlaceDetailsScreen extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    print("expand map");
                     // Navigator.of(context).push(MaterialPageRoute(
                     //     builder: (ctx) =>
                     //         MapDisplay(location: place.location)));

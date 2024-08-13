@@ -8,7 +8,6 @@ import 'package:places_app/screens/places_screen.dart';
 final colorScheme = ColorScheme.fromSeed(
   brightness: Brightness.dark,
   seedColor: const Color.fromARGB(255, 102, 6, 247),
-  background: const Color.fromARGB(255, 33, 30, 37),
 );
 
 final theme = ThemeData().copyWith(
