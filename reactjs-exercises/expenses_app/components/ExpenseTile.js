@@ -7,7 +7,9 @@ function ExpenseTile({ expense }) {
     const navigation = useNavigation();
 
     function expensePressHandler() {
-        navigation.navigate('ManageExpense');
+        navigation.navigate('ManageExpense', {
+            expense: expense
+        });
     }
 
     const formatDate = (date) => {

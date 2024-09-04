@@ -1,4 +1,4 @@
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList, Text, StyleSheet } from "react-native";
 import ExpenseTile from "./ExpenseTile";
 
 function renderExpenseTile (itemData) {
@@ -6,7 +6,20 @@ function renderExpenseTile (itemData) {
 }
 
 function ExpensesList({ expenses }) {
-    return <FlatList data={expenses} renderItem={renderExpenseTile} keyExtractor={(item) => { item.id }}/>
-}
+    return expenses.length > 0 ? (
+      <FlatList data={expenses} renderItem={renderExpenseTile} keyExtractor={(item) => item.id} />
+    ) : (
+      <Text style={styles.fallbacktext}>No expenses to show</Text>
+    );
+  }
 
 export default ExpensesList;
+
+const styles = StyleSheet.create({
+    fallbacktext: {
+        color: 'black',
+        fontSize: 14,
+        textAlign: 'center',
+        marginTop: 20
+      },
+});
