@@ -8,8 +8,13 @@ import { ExpensesContext } from "../store/expenses-context";
 import IconButton from "../components/buttons/IconButton";
 import Button from "../components/buttons/Button";
 import InputField from "../components/InputField";
+import { deleteExpense, storeExpense, updateExpense } from "../util/http";
+import LoadingOverlay from "../components/LoadingOverlay";
+import ErrorOverlay from "../components/ErrorOverlay";
 
 function ManageExpense({ route, navigation }) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState();
     const expensesCtx = useContext(ExpensesContext);
 
     var editExpense = route.params?.expense;
@@ -36,9 +41,16 @@ function ManageExpense({ route, navigation }) {
         });
     }), [navigation, isEditing]
 
-    function deleteExpenseHandler() {
-        expensesCtx.deleteExpense(editExpense.id)
-        navigation.goBack();
+    async function deleteExpenseHandler() {
+        setIsSubmitting(true);
+        try {
+            await deleteExpense(editExpense.id);
+            expensesCtx.deleteExpense(editExpense.id)
+            navigation.goBack();
+        } catch (error) {
+            setError("Could not delete expense");
+            setIsSubmitting(false);
+        }
     }
 
     function cancelHandler() {
@@ -48,7 +60,8 @@ function ManageExpense({ route, navigation }) {
     let priceValid = isEditing;
     let dateValid = isEditing;
     let descValid = isEditing;
-    function confirmHandler() {
+    async function confirmHandler() {
+        setIsSubmitting(true);
         priceValid = !isNaN(inputValues.price) && +inputValues.price > 0
         dateValid = inputValues.date.toString() !== 'Invalid Date'
         descValid = inputValues.description.trim().length > 0;
@@ -58,14 +71,30 @@ function ManageExpense({ route, navigation }) {
             return;
         }
 
-        if (isEditing) {
-            // expensesCtx.updateExpense(editExpense.id, { description: inputValues.description, price: parseFloat(inputValues.price), date: new Date(inputValues.date) })
-            expensesCtx.updateExpense(editExpense.id, { description: inputValues.description, price: +inputValues.price, date: new Date(inputValues.date) })    // + converts to a number -> same as above parseFloat
-        } else {
-            // expensesCtx.addExpense({ description: inputValues.description, price: parseFloat(inputValues.price), date: new Date(inputValues.date) })
-            expensesCtx.addExpense({ description: inputValues.description, price: +inputValues.price, date: new Date(inputValues.date) })
+        let expensData = { description: inputValues.description, price: +inputValues.price, date: new Date(inputValues.date) };
+
+        // + before a variable converts to a number -> same as above parseFloat
+        try {
+            if (isEditing) {
+                expensesCtx.updateExpense(editExpense.id, expensData)
+                updateExpense(editExpense.id, expensData);
+                navigation.goBack();
+            } else {
+                const id = await storeExpense(expensData)
+                expensesCtx.addExpense({...expensData, id: id})
+            }
+        } catch (error) {
+            setError("Could not save data, try again later.")
+            setIsSubmitting(false);
         }
-        navigation.goBack();
+    }
+
+    if (error && !isSubmitting) {
+        return <ErrorOverlay message={error} />
+    }
+
+    if (isSubmitting) {
+        return <LoadingOverlay />
     }
 
     return (
