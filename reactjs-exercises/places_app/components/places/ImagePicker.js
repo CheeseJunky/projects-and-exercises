@@ -48,7 +48,7 @@ function ImagePicker() {
 
     setPickedImage(image.assets[0].uri);
 
-    console.log(image.assets[0].uri)
+    // console.log(image.assets[0].uri)
   }
 
   let imagePreview = <Text>No image taken yet.</Text>;
