@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
-class Place {
-    constructor(title, imageUrl, address, location) {
+export class Place {
+    constructor(title, imageUrl, location) {
         this.title = title;
         this.imageUrl = imageUrl;
-        this.address = address;
-        this.location = location;
-        this.id = uuidv4().toString();
+        this.location = { lat: location.lat, long: location.long };
+        // this.id = uuidv4().toString();
+        this.id = new Date().toString() + Math.random().toString();
     }
 }

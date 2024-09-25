@@ -7,7 +7,7 @@ import { Colors } from "../../constants/styles";
 import { useEffect, useState } from "react";
 import { useNavigation, useRoute, useIsFocused } from "@react-navigation/native";
 
-function LocationPicker() {
+function LocationPicker({onLocationSelected}) {
     const [locationPermissionInfo, requestPermission] = useForegroundPermissions();
     const [coords, setCoords] = useState();
     const [markers, setMarkers] = useState([]);
@@ -25,6 +25,10 @@ function LocationPicker() {
             addMarker(route.params.pickedLocation.lat, route.params.pickedLocation.lng);
         }
     }, [route, isFocused]);
+
+    useEffect(() => {
+        onLocationSelected(coords);
+    }, [coords, onLocationSelected]);
 
     const addMarker = (latitude, longitude) => {
         setMarkers([...markers, { latitude, longitude }]);
@@ -55,7 +59,6 @@ function LocationPicker() {
         }
 
         const result = await getCurrentPositionAsync();
-        console.log(result);
 
         setCoords({
             lat: result.coords['latitude'],
