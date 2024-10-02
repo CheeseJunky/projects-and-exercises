@@ -1,3 +1,9 @@
+:root {
+    --primary: #c192ec;
+    --secondary: #f3e9fb;
+    --border-radius: 5px;
+}
+
 .container {
     display: flex;
     flex-direction: row;
@@ -5,7 +11,7 @@
 }
 
 .navbar {
-    background-color: #c192ec;
+    background-color: var(--primary);
     padding: 14px 20px;
     margin: 0px
 }
@@ -21,10 +27,13 @@
     display: flex;
     flex-direction: column;
     width: 20%;
-    background-color: #f3e9fb;
+    height: 100%;
+    background-color: var(--secondary);
     padding-bottom: 8px;
     margin-top: 10px;
-}
+    border-radius: var(--border-radius);
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
+  }
 
 .middle-area {
     display: flex;
@@ -62,7 +71,10 @@
 }
 
 .price-range-filter input {
-    flex: 1;
+    flex: 1 0 auto;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
 }
 
 .fromto-label {
@@ -70,12 +82,34 @@
 }
 
 .text-button {
-    background-color: #c192ec;
+    background-color: var(--primary);
     color: white;
     padding: 6px 10px;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     border: 0;
     text-transform: uppercase;
+    margin: 10px 20px;
+
+    &:active {
+        opacity: 0.7;
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+.icon-button {
+    background-color: var(--primary);
+    color: white;
+    padding: 6px 10px;
+    border-radius: var(--border-radius);
+    border: 0;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin: 10px 20px;
 
     &:active {
@@ -99,28 +133,88 @@
 .vehicle-list-tile {
     display: flex;
     flex-direction: column;
-    background-color: #c192ec;
+    background-color: var(--primary);
     border: 1px solid black;
     margin-bottom: 10px;
     padding: 10;
+    border-radius: var(--border-radius);
 }
 
 .sort-options {
     list-style: none;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .sort-options li {
     background-color: #af6dec;
-    height: 24px;
-    font-size: 18;
+    height: 40px;
+    font-size: 16px;
     padding: 10px;
     margin-bottom: 10px;
     margin-right: 10px;
-    border-radius: 5;
+    border-radius: var(--border-radius);
     width: 60%;
-    text-align: center;
-  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     &:active {
-      opacity: 0.7;
+        opacity: 0.7;
     }
-  }
+}
+
+.sort-options li label {
+    margin-left: 5px;
+}
+
+.form-group,
+.info-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 10;
+}
+
+.form-group label {
+    flex: 0 0 auto;
+    margin-right: 1rem;
+    text-align: center;
+    width: 100;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    flex: 1 0 auto;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+}
+
+.vehicle-details {
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.info-label {
+    flex: 0 0 auto;
+    text-align: center;
+    width: 100;
+    font-weight: bold;
+}
+
+.info-value {
+    flex: 1 0 auto;
+    border-radius: var(--border-radius);
+}
+
+.info-description {
+    /* Allow word wrapping */
+    white-space: pre-wrap;
+    /* Set a maximum height for the label */
+    max-height: 100px;
+    /* Enable scrolling if content exceeds the height */
+    overflow: auto;
+}

@@ -7,7 +7,7 @@ const VehicleList = ({ vehicles }) => {
   return (
     <ul className='vehicle-list'>
       {vehicles.map((item) => (
-        <VehicleListTile vehicle={item} />
+        <VehicleListTile key={item.id} vehicle={item} />
       ))}
     </ul>
   );
