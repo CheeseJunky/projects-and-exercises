@@ -1,6 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import TextButton from "../components/buttons/text_button";
+import { addVehicle, deleteVehicle, updateVehicle } from "../util/http";
+import { Alert, Snackbar } from '@mui/material';
 
+// TODO: get brands and fuel types from context
 const brands = [
     { id: 1, brand: "Audi" },
     { id: 2, brand: "BMW" },
@@ -18,38 +22,62 @@ const fuelTypes = [
 
 export const Admin = () => {
     const [isEdit, setIsEdit] = useState(false);
-    const [brand, setBrand] = useState('');
-    const [model, setModel] = useState('');
-    const [year, setYear] = useState('');
-    const [price, setPrice] = useState('');
-    const [fuelType, setFuelType] = useState('');
-    const [doors, setDoors] = useState('');
-    const [description, setDescription] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
+    const initialState = {
+        brand: '',
+        model: '',
+        year: '',
+        price: '',
+        fuelType: '',
+        doors: '',
+        description: '',
+        imageUrl: '',
+    };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        const formData = {
-            brand,
-            model,
-            year,
-            price,
-            fuelType,
-            doors,
-            description,
-            imageUrl,
-        };
+    const [formData, setFormData] = useState(initialState);
 
-        console.log("handle submit: " + formData.brand);
+    // snackbar for action feedback
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    const handleSubmit = async (event) => {
+        event.preventDefault(); //prevent reload
+
         if (isEdit) {
             // edit existing
-            console.log("edit resource");
+            const result = await updateVehicle(formData.id, formData);
+            if (result) {
+                setSnackbarOpen(true);
+                setSnackbarMessage('Editing vehicle data successful');
+            } else {
+                setSnackbarOpen(true);
+                setSnackbarMessage('Editing vehicle data failed');
+            }
 
         } else {
             // add new
             console.log("add new resource");
+            const result = await addVehicle(formData);
+            if (result) {
+                setSnackbarOpen(true);
+                setSnackbarMessage('Adding vehicle successful');
+            } else {
+                setSnackbarOpen(true);
+                setSnackbarMessage('Adding vehicle failed');
+            }
         }
     };
+
+    async function handleDelete() {
+        console.log("delete resource");
+        const result = await deleteVehicle(vid);
+        if (result) {
+            setSnackbarOpen(true);
+            setSnackbarMessage('Deletion successful');
+        } else {
+            setSnackbarOpen(true);
+            setSnackbarMessage('Deleting vehicle failed');
+        }
+    }
 
     // get data for edit if we are editing, if we are adding this is empty/null
     const location = useLocation();
@@ -59,96 +87,91 @@ export const Admin = () => {
     useEffect(() => {
         if (data) {
             setIsEdit(true);
+            setFormData(data);
         } else {
-            return;
+            setFormData(initialState);
         }
+    }, [data]);
 
-        if (data.brand) {
-            //TODO
-        }
-        if (data.model) {
-            setModel(data.model);
-        }
-        if (data.year) {
-            setYear(data.year);
-        }
-        if (data.price) {
-            setPrice(data.price);
-        }
-        if (data.fuel_type) {
-            //TODO
-        }
-        if (data.doors) {
-            setDoors(data.doors);
-        }
-        if (data.description) {
-            setDescription(data.description);
-        }
-        if (data.image_url) {
-            setImageUrl(data.image_url);
-        }
-    });
+    const handleChange = (event) => {
+        setFormData({
+            ...formData,
+            [event.target.name]: event.target.value
+        });
+    };
 
     return (
         <div className="container">
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="brand">Brand</label>
-                    <select id="brand" name="brand" value={brand} onChange={(e) => setBrand(e.target.value)}>
-                        <option value="">Select a brand</option>
-                        {brands.map((item) => (
-                            <option key={item.id} value={item.id} id={item.id}>
-                                {item.brand}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label htmlFor="brand">Brand</label>
+                        <select id="brand" name="brand" value={formData.brand} onChange={handleChange}>
+                            <option value="">Select a brand</option>
+                            {brands.map((item) => (
+                                <option key={item.id} value={item.id} id={item.id}>
+                                    {item.brand}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="model">Model</label>
-                    <input type="text" id="model" name="model" value={model} onChange={(e) => setModel(e.target.value)} />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="model">Model</label>
+                        <input type="text" id="model" name="model" value={formData.model} onChange={handleChange} />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="year">Year</label>
-                    <input type="number" id="year" name="year" value={year} onChange={(e) => setYear(e.target.value)} />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="year">Year</label>
+                        <input type="number" id="year" name="year" value={formData.year} onChange={handleChange} />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="price">Price</label>
-                    <input type="number" id="price" name="price" value={price} onChange={(e) => setPrice(e.target.value)} />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="price">Price</label>
+                        <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="fuelType">Fuel Type</label>
-                    <select id="fuelType" name="fuelType" value={fuelType} onChange={(e) => setFuelType(e.target.value)}>
-                        <option value="">Select a fuel type</option>
-                        {fuelTypes.map((item) => (
-                            <option key={item.id} value={item.id} id={item.id}>
-                                {item.brand}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="fuelType">Fuel Type</label>
+                        <select id="fuelType" name="fuelType" value={formData.fuelType} onChange={handleChange}>
+                            <option value="">Select a fuel type</option>
+                            {fuelTypes.map((item) => (
+                                <option key={item.id} value={item.id} id={item.id}>
+                                    {item.brand}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="doors">Doors</label>
-                    <input type="number" id="doors" name="doors" value={doors} onChange={(e) => setDoors(e.target.value)} />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="doors">Doors</label>
+                        <input type="number" id="doors" name="doors" value={formData.doors} onChange={handleChange} />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="description">Description</label>
-                    <textarea id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="description">Description</label>
+                        <textarea id="description" name="description" value={formData.description} onChange={handleChange} />
+                    </div>
 
-                <div className="form-group">
-                    <label htmlFor="imageUrl">Image URL</label>
-                    <input type="text" id="imageUrl" name="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)}
-                    />
-                </div>
+                    <div className="form-group">
+                        <label htmlFor="imageUrl">Image URL</label>
+                        <input type="text" id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange}
+                        />
+                    </div>
 
-                <button className="text-button" type="submit">Submit</button>
-            </form>
+                    <button className="text-button" type="submit">Submit</button>
+
+                </form>
+
+                {/* show only if we are editing an already existing vehicle */}
+                {isEdit && <TextButton label="delete" onClick={handleDelete} />}
+
+                <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+                    <Alert severity={snackbarMessage.includes('successful') ? 'success' : 'error'}>
+                        {snackbarMessage}
+                    </Alert>
+                </Snackbar>
+            </div>
         </div>
     );
 }
