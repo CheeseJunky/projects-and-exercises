@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { BrandsContext } from "../store/brands-context";
 
 const VehicleListTile = ({ vehicle }) => {
     const navigate = useNavigate();
+    const brandsCtx = useContext(BrandsContext);
+    // get name of the brand from brands array
+    const brandName = brandsCtx.brands.find(brand => brand.id === vehicle.brand).brand;
 
     function handlerTileClick() {
         navigate('details', { state: vehicle });
@@ -21,7 +25,7 @@ const VehicleListTile = ({ vehicle }) => {
                     fontSize: 30,
                     marginRight: 10,
                 }}>
-                    {vehicle.brand}
+                    {brandName}
                 </label>
                 <label style={{
                     fontWeight: "bold",

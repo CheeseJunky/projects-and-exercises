@@ -4,13 +4,14 @@ const server_url = "http://127.0.0.1:5000";
 
 export async function getBrands() {
     var response
+    var brands = []
     try {
         response = await axios.get(server_url + "/brands");
     } catch (error) {
         console.error("Error fetching brands", error);
         return [];
     }
-    const brands = response.data;
+    brands = response.data;
 
     return brands;
 }

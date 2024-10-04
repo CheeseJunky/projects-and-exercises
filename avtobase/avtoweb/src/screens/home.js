@@ -12,7 +12,7 @@ export const Home = () => {
     const [filterState, setFilterState] = useState({
         fromPrice: '',
         toPrice: '',
-        checkedBrands: [], // Store checked brands here
+        checkedBrands: [],
     });
 
     const brandsCtx = useContext(BrandsContext);
@@ -34,25 +34,26 @@ export const Home = () => {
         vehiclesCtx.setVehicles(vehicles);
     }
 
-    // get brand list from server
+    // get data for brands/vehicles from server
     useEffect(() => {
-        // TODO: fix double http send
         async function fetchBrands() {
-            const brands = await getBrands();
+            var brands = await getBrands();
             brandsCtx.setBrands(brands);
         }
-
-        if (!brandsCtx.isFetched) {
-            fetchBrands();
-        }
+        fetchBrands();
 
         async function fetchVehicles() {
             const vehicles = await getVehicles({});
             vehiclesCtx.setVehicles(vehicles);
         }
-
         fetchVehicles();
-    }, [brandsCtx.isFetched]);
+
+    }, []);
+
+    const [sortOption, setSortOption] = useState(null);
+    const handleSortOptionChange = (option) => {
+        setSortOption(option);
+    };
 
     return (
         <div className='container'>
@@ -70,10 +71,10 @@ export const Home = () => {
                 <TextButton label="Filter" onClick={submitFilterHandler} />
             </div>
             <div className='middle-area'>
-                <VehicleList vehicles={vehiclesCtx.vehicles} />
+                <VehicleList vehicles={vehiclesCtx.vehicles} sortOption={sortOption} />
             </div>
             <div className='sort-area'>
-                <SortOptions />
+                <SortOptions onOptionChange={handleSortOptionChange} />
             </div>
         </div>
     );
