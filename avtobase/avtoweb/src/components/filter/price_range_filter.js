@@ -1,31 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const PriceRangeFilter = () => {
-  const [fromPrice, setFromPrice] = useState('');
-  const [toPrice, setToPrice] = useState('');
-
-  const handleFromPriceChange = (event) => {
-    setFromPrice(event.target.value);
-  };
-
-  const handleToPriceChange = (event) => {
-    setToPrice(event.target.value);
-  };
-
+const PriceRangeFilter = ({ fromPrice, toPrice, onFromPriceChange, onToPriceChange }) => {
   return (
     <div className='price-range-filter'>
       <label style={{ fontWeight: "bold" }}>Price range</label>
       <label className='fromto-label'>From:</label>
       <input
         type="number"
+        min="0"
         value={fromPrice}
-        onChange={handleFromPriceChange}
+        onChange={onFromPriceChange}
       />
       <label className='fromto-label'>To:</label>
       <input
         type="number"
+        min="0"
         value={toPrice}
-        onChange={handleToPriceChange}
+        onChange={onToPriceChange}
       />
     </div>
   );

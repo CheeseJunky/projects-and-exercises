@@ -13,6 +13,9 @@ function BrandsContextProvider({ children }) {
 
     function setBrands(newBrands) {
         setBrandList(newBrands);
+        if (brands.length > 0) {
+            setIsDataFetched(true);
+        }
     }
 
     function setIsDataFetched(isDone) {

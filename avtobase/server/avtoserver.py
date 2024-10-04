@@ -125,15 +125,23 @@ def get_vehicles():
         conditions = []
         params_list = []
         # brand, from and to are optional parameters
-        if 'brand' in params:
-            conditions.append("brand = %s")
-            params_list.append(params['brand'])
+        if 'checkedBrands' in params:   
+            # array of brands (not mandatory)
+            checkedBrands = params['checkedBrands']
+            if len(checkedBrands) > 0:
+                in_clause = "brand IN (%s)" % ', '.join(['%s'] * len(checkedBrands))
+                conditions.append(in_clause)
+                params_list.extend(checkedBrands)
         if 'fromPrice' in params:
-            conditions.append("price >= %s")
-            params_list.append(params['fromPrice'])
+            # not a mandatory argument
+            if (params['fromPrice'] != ""):
+                conditions.append("price >= %s")
+                params_list.append(params['fromPrice'])
         if 'toPrice' in params:
-            conditions.append("price <= %s")
-            params_list.append(params['toPrice'])
+            # not a mandatory argument
+            if (params['toPrice'] != ""):
+                conditions.append("price <= %s")
+                params_list.append(params['toPrice'])
 
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
