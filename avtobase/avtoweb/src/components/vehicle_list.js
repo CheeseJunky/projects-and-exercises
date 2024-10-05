@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import '../styles/styles.css';
 import VehicleListTile from './vehicle_tile';
 import { BrandsContext } from '../store/brands-context';
+import { Box } from '@mui/material';
 
 const VehicleList = ({ vehicles, sortOption }) => {
   const sortedVehicles = vehicles.slice();
@@ -53,7 +54,10 @@ const VehicleList = ({ vehicles, sortOption }) => {
   return (
     <ul className='vehicle-list'>
       {sortedVehicles.map((item) => (
-        <VehicleListTile key={item.id} vehicle={item} />
+        <>
+          <VehicleListTile key={item.id} vehicle={item} />
+          <Box height={10}></Box>
+        </>
       ))}
     </ul>
   );

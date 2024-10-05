@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from 'react';
-import TextButton from '../components/buttons/text_button';
 import BrandList from '../components/filter/brand_list';
 import PriceRangeFilter from '../components/filter/price_range_filter';
 import SortOptions from '../components/sort_options';
@@ -7,6 +6,7 @@ import VehicleList from '../components/vehicle_list';
 import { getBrands, getVehicles } from '../util/http';
 import { BrandsContext } from '../store/brands-context';
 import { VehiclesContext } from '../store/vehicles-context';
+import { Button } from '@mui/material';
 
 export const Home = () => {
     const [filterState, setFilterState] = useState({
@@ -68,7 +68,17 @@ export const Home = () => {
                     onFromPriceChange={handleFromPriceChange}
                     onToPriceChange={handleToPriceChange}
                 />
-                <TextButton label="Filter" onClick={submitFilterHandler} />
+                <Button
+                    variant='contained'
+                    color="secondary"
+                    style={{
+                        marginLeft: 10,
+                        marginRight: 10,
+                    }}
+                    onClick={submitFilterHandler}
+                >
+                    Filter
+                </Button>
             </div>
             <div className='middle-area'>
                 <VehicleList vehicles={vehiclesCtx.vehicles} sortOption={sortOption} />

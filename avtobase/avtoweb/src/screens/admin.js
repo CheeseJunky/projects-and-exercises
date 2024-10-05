@@ -1,18 +1,8 @@
 import { useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import TextButton from "../components/buttons/text_button";
+import { useContext, useEffect, useState } from "react";
 import { addVehicle, deleteVehicle, updateVehicle } from "../util/http";
-import { Alert, Snackbar } from '@mui/material';
-
-// TODO: get brands and fuel types from context
-const brands = [
-    { id: 1, brand: "Audi" },
-    { id: 2, brand: "BMW" },
-    { id: 3, brand: "Citroen" },
-    { id: 4, brand: "Ford" },
-    { id: 5, brand: "Merc" },
-    { id: 6, brand: "Opel" },
-];
+import { Alert, Box, Button, Snackbar } from '@mui/material';
+import { BrandsContext } from "../store/brands-context";
 
 const fuelTypes = [
     { id: 1, brand: "petrol" },
@@ -32,7 +22,6 @@ export const Admin = () => {
         description: '',
         imageUrl: '',
     };
-
     const [formData, setFormData] = useState(initialState);
 
     // snackbar for action feedback
@@ -55,7 +44,6 @@ export const Admin = () => {
 
         } else {
             // add new
-            console.log("add new resource");
             const result = await addVehicle(formData);
             if (result) {
                 setSnackbarOpen(true);
@@ -68,7 +56,6 @@ export const Admin = () => {
     };
 
     async function handleDelete() {
-        console.log("delete resource");
         const result = await deleteVehicle(vid);
         if (result) {
             setSnackbarOpen(true);
@@ -82,6 +69,8 @@ export const Admin = () => {
     // get data for edit if we are editing, if we are adding this is empty/null
     const location = useLocation();
     const data = location.state;
+
+    const brandsCtx = useContext(BrandsContext);
 
     // set data if we are editing
     useEffect(() => {
@@ -108,7 +97,7 @@ export const Admin = () => {
                         <label htmlFor="brand">Brand</label>
                         <select id="brand" name="brand" value={formData.brand} onChange={handleChange}>
                             <option value="">Select a brand</option>
-                            {brands.map((item) => (
+                            {brandsCtx.brands.map((item) => (
                                 <option key={item.id} value={item.id} id={item.id}>
                                     {item.brand}
                                 </option>
@@ -155,16 +144,39 @@ export const Admin = () => {
 
                     <div className="form-group">
                         <label htmlFor="imageUrl">Image URL</label>
-                        <input type="text" id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange}
-                        />
+                        <input type="text" id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange} />
                     </div>
 
-                    <button className="text-button" type="submit">Submit</button>
+                    {/* <button className="text-button" type="submit">Submit</button> */}
+                    <Button
+                        variant='contained'
+                        color="secondary"
+                        style={{
+                            marginLeft: 10,
+                            marginRight: 10,
+                        }}
+                    >
+                        Submit
+                    </Button>
 
                 </form>
 
                 {/* show only if we are editing an already existing vehicle */}
-                {isEdit && <TextButton label="delete" onClick={handleDelete} />}
+                {isEdit &&
+                    <>
+                        <Box height={10} ></Box>
+                        <Button
+                            variant='contained'
+                            color="secondary"
+                            style={{
+                                marginLeft: 10,
+                                marginRight: 10,
+                            }}
+                            onClick={handleDelete}
+                        >
+                            Delete
+                        </Button>
+                    </>}
 
                 <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
                     <Alert severity={snackbarMessage.includes('successful') ? 'success' : 'error'}>

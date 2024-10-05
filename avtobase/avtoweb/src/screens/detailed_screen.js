@@ -1,13 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom"
-import TextButton from "../components/buttons/text_button";
+import { BrandsContext } from "../store/brands-context";
+import { useContext } from "react";
+import { Button } from "@mui/material";
 
 export const DetailedScreen = () => {
     const location = useLocation();
     const vehicle = location.state;
 
-    const navigate = useNavigate();
-    console.log("img: " + vehicle.image_url);
+    const brandsCtx = useContext(BrandsContext);
+    // get name of the brand from brands array
+    const brandName = brandsCtx.brands.find(brand => brand.id === vehicle.brand).brand;
 
+    const navigate = useNavigate();
     function handleEditClick() {
         navigate('/admin', { state: vehicle });
     }
@@ -19,7 +23,7 @@ export const DetailedScreen = () => {
                 flexDirection: "column"
             }}>
                 <div className='vehicle-details'>
-                    
+
                     {/* name + model */}
                     <div style={{
                         display: "flex",
@@ -30,7 +34,7 @@ export const DetailedScreen = () => {
                             fontSize: 30,
                             marginRight: 10,
                         }}>
-                            {vehicle.brand}
+                            {brandName}
                         </label>
                         <label style={{
                             fontWeight: "bold",
@@ -53,7 +57,6 @@ export const DetailedScreen = () => {
                             src={vehicle.image_url}
                             alt="Image of the car failed to load"
                         />
-
                     </div>
 
                     {/* other info */}
@@ -86,7 +89,17 @@ export const DetailedScreen = () => {
 
                 </div>
                 <div>
-                    <TextButton label="edit" onClick={handleEditClick} />
+                    <Button
+                        variant='contained'
+                        color="secondary"
+                        style={{
+                            marginLeft: 10,
+                            marginRight: 10,
+                        }}
+                        onClick={handleEditClick}
+                    >
+                        Edit
+                    </Button>
                 </div>
             </div>
         </div>
