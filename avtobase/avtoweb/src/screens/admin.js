@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { addVehicle, deleteVehicle, updateVehicle } from "../util/http";
 import { Alert, Box, Button, Snackbar } from '@mui/material';
 import { BrandsContext } from "../store/brands-context";
+import { UserContext } from "../store/user-context";
 
 const fuelTypes = [
     { id: 1, brand: "petrol" },
@@ -33,7 +34,7 @@ export const Admin = () => {
 
         if (isEdit) {
             // edit existing
-            const result = await updateVehicle(formData.id, formData);
+            const result = await updateVehicle(data.id, formData);
             if (result) {
                 setSnackbarOpen(true);
                 setSnackbarMessage('Editing vehicle data successful');
@@ -56,7 +57,7 @@ export const Admin = () => {
     };
 
     async function handleDelete() {
-        const result = await deleteVehicle(vid);
+        const result = await deleteVehicle(data.id);
         if (result) {
             setSnackbarOpen(true);
             setSnackbarMessage('Deletion successful');
@@ -88,6 +89,11 @@ export const Admin = () => {
             [event.target.name]: event.target.value
         });
     };
+
+    // check users role and disable admin buttons
+    // role -> normal = 0, admin = 1
+    const userCtx = useContext(UserContext);
+    const isAdmin = userCtx.user.role === 1;
 
     return (
         <div className="container">
@@ -151,10 +157,12 @@ export const Admin = () => {
                     <Button
                         variant='contained'
                         color="secondary"
+                        disabled={!isAdmin}
                         style={{
                             marginLeft: 10,
                             marginRight: 10,
                         }}
+                        onClick={handleSubmit}
                     >
                         Submit
                     </Button>
@@ -168,6 +176,7 @@ export const Admin = () => {
                         <Button
                             variant='contained'
                             color="secondary"
+                            disabled={!isAdmin}
                             style={{
                                 marginLeft: 10,
                                 marginRight: 10,

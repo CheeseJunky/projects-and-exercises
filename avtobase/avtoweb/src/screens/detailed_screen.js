@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { BrandsContext } from "../store/brands-context";
 import { useContext } from "react";
 import { Button } from "@mui/material";
+import { UserContext } from "../store/user-context";
 
 export const DetailedScreen = () => {
     const location = useLocation();
@@ -15,6 +16,11 @@ export const DetailedScreen = () => {
     function handleEditClick() {
         navigate('/admin', { state: vehicle });
     }
+
+    // check users role and disable admin buttons
+    // role -> normal = 0, admin = 1
+    const userCtx = useContext(UserContext);
+    const isAdmin = userCtx.user.role === 1;
 
     return (
         <div className="container">
@@ -92,6 +98,7 @@ export const DetailedScreen = () => {
                     <Button
                         variant='contained'
                         color="secondary"
+                        disabled={!isAdmin}
                         style={{
                             marginLeft: 10,
                             marginRight: 10,

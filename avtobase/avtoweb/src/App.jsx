@@ -6,6 +6,7 @@ import { Home } from "./screens/home";
 import { Admin } from "./screens/admin";
 import { DetailedScreen } from "./screens/detailed_screen";
 import { DataProviders } from "./store/data-provider";
+import LoginScreen from "./screens/login";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           <Route path='/' element={<Home />} />
           <Route path='/admin' element={<Admin />} />
           <Route path='/details' element={<DetailedScreen />} />
+          <Route path='/login' element={<LoginScreen />} />
         </Routes>
       </DataProviders>
     </>

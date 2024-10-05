@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
+from users_db import auth_user
 
 app = Flask(__name__)
 CORS(app)
@@ -68,10 +69,10 @@ def add_vehicle():
             vehicle_data['model'],
             vehicle_data['year'],
             vehicle_data['price'],
-            vehicle_data['fuel_type'],
+            vehicle_data['fuelType'],
             vehicle_data['doors'],
             vehicle_data['description'],
-            vehicle_data['image_url']
+            vehicle_data['imageUrl']
         ))
         conn.commit()
 
@@ -167,6 +168,17 @@ def get_vehicles():
         print("Error:", e)
 
     return jsonify(vehicles)
+
+@app.route('/login', methods=['POST'])
+def user_login():
+    params  = request.get_json()
+    if params and params['name'] and params['password']:
+        user = auth_user(params['name'], params['password'])
+        print(user)
+    else:
+        user = {}
+
+    return jsonify(user)
 
 
 if __name__ == '__main__':

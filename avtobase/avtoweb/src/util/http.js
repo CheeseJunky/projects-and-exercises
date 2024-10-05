@@ -21,7 +21,7 @@ export async function deleteVehicle(vehicleId) {
     try {
         response = await axios.delete(server_url + `/delete_vehicle/${vehicleId}`)
 
-        if (response.status === 201) {
+        if (response.status === 200) {
             return true;
         }
     } catch (error) {
@@ -73,4 +73,18 @@ export async function getVehicles(filterData) {
     const vehicles = response.data;
 
     return vehicles;
+}
+
+export async function loginUser(username, password) {
+    var response
+    try {
+        response = await axios.post(server_url + "/login", { "name": username, "password": password });
+    } catch (error) {
+        console.error("Error logging in", error);
+        return {}
+    }
+    const user = response.data;
+    console.log(user);
+
+    return user;
 }

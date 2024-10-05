@@ -2,3 +2,9 @@ flask:
     https://flask.palletsprojects.com/en/3.0.x/installation/#
 cors:
     https://flask-cors.readthedocs.io/en/latest/
+sqlalchemy:
+    https://www.sqlalchemy.org/
+mysql connector:
+    https://pypi.org/project/mysql-connector-python/
+mysqlclient:
+    https://pypi.org/project/mysqlclient/

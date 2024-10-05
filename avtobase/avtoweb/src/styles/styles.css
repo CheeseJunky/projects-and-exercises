@@ -13,7 +13,12 @@
 .navbar {
     background-color: var(--primary);
     padding: 14px 20px;
-    margin: 0px
+    margin: 0px;
+    overflow: hidden;
+}
+
+.navbar a:last-child {
+    float: right;
 }
 
 .navbar a {
@@ -215,4 +220,8 @@
     max-height: 100px;
     /* Enable scrolling if content exceeds the height */
     overflow: auto;
+}
+
+.login-screen {
+    width: 30%
 }
