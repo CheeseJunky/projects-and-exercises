@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useMemo, useState } from "react";
 
 export const VehiclesContext = createContext({
     vehicles: [],
@@ -8,14 +8,14 @@ export const VehiclesContext = createContext({
 function VehiclesContextProvider({ children }) {
     const [vehicleList, setVehicleList] = useState([]);
 
-    function setVehicles(newVehicles) {
-        setVehicleList(newVehicles);
-    }
+    const setVehicles = useCallback((newVehicles) => {
+        setVehicleList(Array.isArray(newVehicles) ? newVehicles : []);
+    }, []);
 
-    const value = {
-        vehicles: vehicleList,
-        setVehicles: setVehicles,
-    }
+    const value = useMemo(
+        () => ({ vehicles: vehicleList, setVehicles }),
+        [vehicleList, setVehicles],
+    );
 
     return <VehiclesContext.Provider value={value}>
         {children}

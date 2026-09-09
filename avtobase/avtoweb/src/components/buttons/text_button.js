@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Button from '@mui/material/Button';
 
-const TextButton = ({ label, onClick }) => {
-    const [isDisabled, setIsDisabled] = useState(false);
+// Reusable button that blocks double submits. `isDisabled` is now actually bound
+// to the button, and the pending timeout is cleared on unmount.
+const TextButton = ({ label, onClick, cooldownMs = 1000, ...buttonProps }) => {
+  const [isDisabled, setIsDisabled] = useState(false);
+  const timeoutRef = useRef(null);
 
-    const handleClick = () => {
-      if (!isDisabled) {
-        setIsDisabled(true);
-        onClick();
-        setTimeout(() => setIsDisabled(false), 1000);   // spam timeout
-      }
-    };
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
+
+  const handleClick = (event) => {
+    if (isDisabled) {
+      return;
+    }
+    setIsDisabled(true);
+    onClick?.(event);
+    timeoutRef.current = setTimeout(() => setIsDisabled(false), cooldownMs);
+  };
 
   return (
-    <button className="text-button" onClick={handleClick}>
+    <Button
+      variant="contained"
+      color="secondary"
+      {...buttonProps}
+      disabled={isDisabled || buttonProps.disabled}
+      onClick={handleClick}
+    >
       {label}
-    </button>
+    </Button>
   );
 };
 

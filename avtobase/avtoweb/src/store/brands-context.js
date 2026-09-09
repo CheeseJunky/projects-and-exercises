@@ -1,33 +1,40 @@
-import { createContext, useState } from "react";
+import { createContext, useCallback, useMemo, useState } from "react";
 
 export const BrandsContext = createContext({
     brands: [],
     isFetched: false,
     setBrands: (brands) => { },
-    setIsFetched: (isDone) => { },
+    getBrandName: (brandId) => '',
 });
 
 function BrandsContextProvider({ children }) {
     const [brandList, setBrandList] = useState([]);
-    const [isDataFetched, setIsDataDetched] = useState(false);
+    const [isFetched, setIsFetched] = useState(false);
 
-    function setBrands(newBrands) {
-        setBrandList(newBrands);
-        if (brandList.length > 0) {
-            setIsDataFetched(true);
-        }
-    }
+    const setBrands = useCallback((newBrands) => {
+        const brands = Array.isArray(newBrands) ? newBrands : [];
+        setBrandList(brands);
+        // The fetch is done regardless of how many rows came back; deriving this
+        // from the previous state was always one render behind.
+        setIsFetched(true);
+    }, []);
 
-    function setIsDataFetched(isDone) {
-        setIsDataDetched(isDone);
-    }
+    // Lookup map so the list/tiles do not run a linear search per vehicle.
+    const brandsById = useMemo(() => {
+        const map = new Map();
+        brandList.forEach((brand) => map.set(brand.id, brand.brand));
+        return map;
+    }, [brandList]);
 
-    const value = {
-        brands: brandList,
-        isFetched: isDataFetched,
-        setBrands: setBrands,
-        setIsFetched: setIsDataFetched
-    }
+    const getBrandName = useCallback(
+        (brandId) => brandsById.get(brandId) ?? 'Unknown brand',
+        [brandsById],
+    );
+
+    const value = useMemo(
+        () => ({ brands: brandList, isFetched, setBrands, getBrandName }),
+        [brandList, isFetched, setBrands, getBrandName],
+    );
 
     return <BrandsContext.Provider value={value}>
         {children}

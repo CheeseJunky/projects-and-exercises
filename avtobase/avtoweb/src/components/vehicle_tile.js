@@ -1,49 +1,97 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { BrandsContext } from "../store/brands-context";
+import {
+    Card,
+    CardActionArea,
+    CardContent,
+    CardMedia,
+    Chip,
+    Stack,
+    Typography,
+} from '@mui/material';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import SensorDoorIcon from '@mui/icons-material/SensorDoor';
 
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
-import Typography from '@mui/material/Typography';
-import { Box } from '@mui/material';
+import { BrandsContext } from "../store/brands-context";
+import { formatPrice, fuelTypeName } from "../util/constants";
+
+const FALLBACK_IMAGE =
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">
+            <rect width="100%" height="100%" fill="#ece3f5"/>
+            <text x="50%" y="50%" fill="#7b3fbf" font-family="sans-serif"
+                  font-size="16" text-anchor="middle">Image unavailable</text>
+        </svg>`,
+    );
 
 const VehicleListTile = ({ vehicle }) => {
     const navigate = useNavigate();
     const brandsCtx = useContext(BrandsContext);
-    // get name of the brand from brands array
-    const brandName = brandsCtx.brands.find(brand => brand.id === vehicle.brand).brand;
+    // Safe lookup: vehicles can arrive before the brand list does, and the old
+    // `.find(...).brand` threw a TypeError in that window.
+    const brandName = brandsCtx.getBrandName(vehicle.brand);
 
-    function handlerTileClick() {
-        navigate('details', { state: vehicle });
+    function handleTileClick() {
+        navigate('/details', { state: vehicle });
     }
 
     return (
-        <>
-            <Card variant="outlined" onClick={handlerTileClick}>
+        <Card variant="outlined">
+            <CardActionArea onClick={handleTileClick}>
+                <CardMedia
+                    component="img"
+                    alt={`${brandName} ${vehicle.model}`}
+                    height="220"
+                    image={vehicle.image_url || FALLBACK_IMAGE}
+                    onError={(event) => { event.target.src = FALLBACK_IMAGE; }}
+                    sx={{ objectFit: 'cover', bgcolor: 'action.hover' }}
+                />
                 <CardContent>
-                    <Typography variant="h5">
-                        {brandName} {vehicle.model}
+                    <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="baseline"
+                        spacing={1}
+                    >
+                        <Typography variant="h6" component="h2">
+                            {brandName} {vehicle.model}
+                        </Typography>
+                        <Typography variant="h6" color="primary" sx={{ whiteSpace: 'nowrap' }}>
+                            {formatPrice(vehicle.price)}
+                        </Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} sx={{ my: 1.5 }} flexWrap="wrap" useFlexGap>
+                        <Chip size="small" icon={<CalendarMonthIcon />} label={vehicle.year} />
+                        <Chip
+                            size="small"
+                            icon={<LocalGasStationIcon />}
+                            label={fuelTypeName(vehicle.fuel_type)}
+                        />
+                        <Chip
+                            size="small"
+                            icon={<SensorDoorIcon />}
+                            label={`${vehicle.doors} doors`}
+                        />
+                    </Stack>
+
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {vehicle.description}
                     </Typography>
-                    <CardMedia
-                        component="img"
-                        alt="Image of the car failed to load"
-                        height="200"
-                        image={vehicle.image_url}
-                    />
-                    <div className="info-group">
-                        <Typography variant="body2">Price: {vehicle.price}€</Typography>
-                    </div>
-                    <div className="info-group">
-                        <Typography variant="body2">Year: {vehicle.year}</Typography>
-                    </div>
-                    <div className="info-group">
-                        <Typography variant="body2">Description: {vehicle.description}</Typography>
-                    </div>
                 </CardContent>
-            </Card>
-            <Box height={10}></Box>
-        </>
+            </CardActionArea>
+        </Card>
     );
 };
 

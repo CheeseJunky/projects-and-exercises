@@ -21,9 +21,15 @@ INSERT INTO `fuel_types` (`id`, `type`) VALUES
 	(3, 'electric');
 
 -- Dumping data for table avtobase.users: ~2 rows (approximately)
+--
+-- Local development seed accounts. Both passwords are "demo1234", stored as
+-- scrypt hashes. Change them before this ever leaves a development machine.
+--
+-- NOTE: `password` must be VARCHAR(255) for these hashes to fit - run
+-- db/002_auth.sql (or `python server/users_db.py`) before loading this file.
 INSERT INTO `users` (`id`, `name`, `surname`, `username`, `role`, `email`, `password`, `token`) VALUES
-	(1, 'Alen', 'Cvahte', 'cheese', 1, 'a.cvahte@gmail.com', 'alen123', NULL),
-	(2, 'Test', 'Testni', 'test_user', 0, 'test@test.com', 'test123', NULL);
+	(1, 'Demo', 'Admin', 'demo_admin', 1, 'admin@example.com', 'scrypt:32768:8:1$ezUHflsrB4h2JGY3$fb2d4f2efa901fcb252696687ce0d22361f2f4c1b39304e76b9a226b804cf710f3f1013340283cbb89c2d5ce10d61cc64571244d6313aa376b6a1cfa5a4e5e0a', NULL),
+	(2, 'Demo', 'User', 'demo_user', 0, 'user@example.com', 'scrypt:32768:8:1$Ht7HAMv8htagfxZd$cf50b211c8b35638e3df0e3fbc0d78ca8f5bf5e5173e2524dc5377f9c4c9ca81eeda84e868effa37be87008eed8793ee3ab6c7c09cc6a09ab28417c66bd5139b', NULL);
 
 -- Dumping data for table avtobase.vehicles: ~40 rows (approximately)
 INSERT INTO `vehicles` (`id`, `brand`, `model`, `year`, `price`, `fuel_type`, `doors`, `description`, `image_url`) VALUES

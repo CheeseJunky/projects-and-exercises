@@ -1,35 +1,53 @@
 import React from 'react';
-import '../styles/styles.css';
-import { ExpandLess, ExpandMore, SortByAlpha } from '@mui/icons-material';
+import {
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Paper,
+    Typography,
+} from '@mui/material';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 
-const SortOptions = ({ onOptionChange }) => {
+import { SORT_OPTIONS } from '../util/constants';
+
+// Named options instead of magic numbers, so the list and this widget cannot
+// drift apart when an entry is inserted.
+const options = [
+    { id: SORT_OPTIONS.PRICE_ASC, label: 'Cheaper first', icon: <ArrowUpwardIcon /> },
+    { id: SORT_OPTIONS.PRICE_DESC, label: 'Expensive first', icon: <ArrowDownwardIcon /> },
+    { id: SORT_OPTIONS.BRAND_ASC, label: 'Brand A - Z', icon: <SortByAlphaIcon /> },
+    { id: SORT_OPTIONS.BRAND_DESC, label: 'Brand Z - A', icon: <SortByAlphaIcon /> },
+    { id: SORT_OPTIONS.YEAR_DESC, label: 'Newer first', icon: <ArrowDownwardIcon /> },
+    { id: SORT_OPTIONS.YEAR_ASC, label: 'Older first', icon: <ArrowUpwardIcon /> },
+];
+
+const SortOptions = ({ selectedOption, onOptionChange }) => {
     return (
-        <ul className='sort-options'>
-            <li key="cheaper-first" onClick={() => { onOptionChange(0) }}>
-                <ExpandLess />
-                <label>Cheaper first</label>
-            </li>
-            <li key="expensive-first" onClick={() => { onOptionChange(1) }}>
-                <ExpandMore />
-                <label>Expensive first</label>
-            </li>
-            <li key="brand-a" onClick={() => { onOptionChange(2) }}>
-                <SortByAlpha />
-                <label>Brand A - Z</label>
-            </li>
-            <li key="brand-z" onClick={() => { onOptionChange(3) }}>
-                <SortByAlpha />
-                <label>Brand Z - A</label>
-            </li>
-            <li key="year-new" onClick={() => { onOptionChange(4) }}>
-                <ExpandMore />
-                <label>Newer first</label>
-            </li>
-            <li key="year-old" onClick={() => { onOptionChange(5) }}>
-                <ExpandLess />
-                <label>Older first</label>
-            </li>
-        </ul>
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                Sort by
+            </Typography>
+
+            <List disablePadding>
+                {options.map((option) => (
+                    <ListItemButton
+                        key={option.id}
+                        selected={selectedOption === option.id}
+                        // Clicking the active option clears the sorting again.
+                        onClick={() =>
+                            onOptionChange(selectedOption === option.id ? null : option.id)
+                        }
+                        sx={{ borderRadius: 1, mb: 0.5 }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 36 }}>{option.icon}</ListItemIcon>
+                        <ListItemText primary={option.label} />
+                    </ListItemButton>
+                ))}
+            </List>
+        </Paper>
     );
 };
 

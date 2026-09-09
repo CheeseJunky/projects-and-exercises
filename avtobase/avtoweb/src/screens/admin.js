@@ -1,198 +1,333 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
-import { addVehicle, deleteVehicle, updateVehicle } from "../util/http";
-import { Alert, Box, Button, Snackbar } from '@mui/material';
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    MenuItem,
+    Snackbar,
+    Stack,
+    TextField,
+    Typography,
+} from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+import { addVehicle, deleteVehicle, describeError, updateVehicle } from "../util/http";
 import { BrandsContext } from "../store/brands-context";
 import { UserContext } from "../store/user-context";
+import { FUEL_TYPES } from "../util/constants";
 
-const fuelTypes = [
-    { id: 1, brand: "petrol" },
-    { id: 2, brand: "diesel" },
-    { id: 3, brand: "electric" },
-]
+// Field names match the shape the API returns for a vehicle. They used to be
+// camelCase here while the server read snake_case on update, so edits to fuel
+// type and image URL were silently dropped.
+const EMPTY_FORM = {
+    brand: '',
+    model: '',
+    year: '',
+    price: '',
+    fuel_type: '',
+    doors: '',
+    description: '',
+    image_url: '',
+};
+
+const currentYear = new Date().getFullYear();
+
+function validate(formData) {
+    const errors = {};
+
+    if (!formData.brand) errors.brand = 'Pick a brand';
+    if (!formData.model?.trim()) errors.model = 'Model is required';
+    if (!formData.fuel_type) errors.fuel_type = 'Pick a fuel type';
+
+    const year = Number(formData.year);
+    if (!formData.year) {
+        errors.year = 'Year is required';
+    } else if (!Number.isInteger(year) || year < 1900 || year > currentYear + 1) {
+        errors.year = 'Enter a year between 1900 and ' + (currentYear + 1);
+    }
+
+    const price = Number(formData.price);
+    if (formData.price === '') {
+        errors.price = 'Price is required';
+    } else if (!Number.isFinite(price) || price < 0) {
+        errors.price = 'Price cannot be negative';
+    }
+
+    const doors = Number(formData.doors);
+    if (formData.doors === '') {
+        errors.doors = 'Number of doors is required';
+    } else if (!Number.isInteger(doors) || doors < 0 || doors > 7) {
+        errors.doors = 'Enter a number between 0 and 7';
+    }
+
+    return errors;
+}
 
 export const Admin = () => {
-    const [isEdit, setIsEdit] = useState(false);
-    const initialState = {
-        brand: '',
-        model: '',
-        year: '',
-        price: '',
-        fuelType: '',
-        doors: '',
-        description: '',
-        imageUrl: '',
+    const navigate = useNavigate();
+    // Vehicle to edit, or undefined when adding a new one.
+    const { state: editedVehicle } = useLocation();
+    const isEdit = Boolean(editedVehicle?.id);
+
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const [errors, setErrors] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [feedback, setFeedback] = useState(null); // { severity, message }
+
+    const brandsCtx = useContext(BrandsContext);
+    const userCtx = useContext(UserContext);
+    const isAdmin = userCtx.isAdmin;
+
+    useEffect(() => {
+        setFormData(editedVehicle ? { ...EMPTY_FORM, ...editedVehicle } : EMPTY_FORM);
+        setErrors({});
+    }, [editedVehicle]);
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
     };
-    const [formData, setFormData] = useState(initialState);
 
-    // snackbar for action feedback
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-
+    // Single submit path: the button is the submit button of the form, so the
+    // handler no longer fires twice (once from onClick, once from the form).
     const handleSubmit = async (event) => {
-        event.preventDefault(); //prevent reload
+        event.preventDefault();
 
-        if (isEdit) {
-            // edit existing
-            const result = await updateVehicle(data.id, formData);
-            if (result) {
-                setSnackbarOpen(true);
-                setSnackbarMessage('Editing vehicle data successful');
-            } else {
-                setSnackbarOpen(true);
-                setSnackbarMessage('Editing vehicle data failed');
-            }
+        const validationErrors = validate(formData);
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
 
-        } else {
-            // add new
-            const result = await addVehicle(formData);
-            if (result) {
-                setSnackbarOpen(true);
-                setSnackbarMessage('Adding vehicle successful');
+        setIsSaving(true);
+        try {
+            if (isEdit) {
+                await updateVehicle(editedVehicle.id, formData);
+                setFeedback({ severity: 'success', message: 'Vehicle updated' });
             } else {
-                setSnackbarOpen(true);
-                setSnackbarMessage('Adding vehicle failed');
+                await addVehicle(formData);
+                setFeedback({ severity: 'success', message: 'Vehicle added' });
+                setFormData(EMPTY_FORM);
             }
+        } catch (error) {
+            setFeedback({ severity: 'error', message: describeError(error, 'Saving failed') });
+        } finally {
+            setIsSaving(false);
         }
     };
 
     async function handleDelete() {
-        const result = await deleteVehicle(data.id);
-        if (result) {
-            setSnackbarOpen(true);
-            setSnackbarMessage('Deletion successful');
-        } else {
-            setSnackbarOpen(true);
-            setSnackbarMessage('Deleting vehicle failed');
+        setConfirmDelete(false);
+        setIsSaving(true);
+        try {
+            await deleteVehicle(editedVehicle.id);
+            // Back to the list, which refetches and drops the deleted row.
+            navigate('/', { replace: true });
+        } catch (error) {
+            setFeedback({ severity: 'error', message: describeError(error, 'Deleting failed') });
+        } finally {
+            setIsSaving(false);
         }
     }
 
-    // get data for edit if we are editing, if we are adding this is empty/null
-    const location = useLocation();
-    const data = location.state;
-
-    const brandsCtx = useContext(BrandsContext);
-
-    // set data if we are editing
-    useEffect(() => {
-        if (data) {
-            setIsEdit(true);
-            setFormData(data);
-        } else {
-            setFormData(initialState);
-        }
-    }, [data]);
-
-    const handleChange = (event) => {
-        setFormData({
-            ...formData,
-            [event.target.name]: event.target.value
-        });
-    };
-
-    // check users role and disable admin buttons
-    // role -> normal = 0, admin = 1
-    const userCtx = useContext(UserContext);
-    const isAdmin = userCtx.user.role === 1;
-
     return (
-        <div className="container">
-            <div>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="brand">Brand</label>
-                        <select id="brand" name="brand" value={formData.brand} onChange={handleChange}>
-                            <option value="">Select a brand</option>
-                            {brandsCtx.brands.map((item) => (
-                                <option key={item.id} value={item.id} id={item.id}>
-                                    {item.brand}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+        <Container maxWidth="md" sx={{ py: 3 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
+                {isEdit ? 'Edit vehicle' : 'Add vehicle'}
+            </Typography>
 
-                    <div className="form-group">
-                        <label htmlFor="model">Model</label>
-                        <input type="text" id="model" name="model" value={formData.model} onChange={handleChange} />
-                    </div>
+            {!isAdmin && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                    You are signed in as <strong>{userCtx.user.username}</strong>. Log in with an
+                    admin account to change vehicle data.
+                </Alert>
+            )}
 
-                    <div className="form-group">
-                        <label htmlFor="year">Year</label>
-                        <input type="number" id="year" name="year" value={formData.year} onChange={handleChange} />
-                    </div>
+            <Card variant="outlined">
+                <CardContent>
+                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                        <Stack spacing={2}>
+                            <TextField
+                                select
+                                label="Brand"
+                                name="brand"
+                                value={formData.brand}
+                                onChange={handleChange}
+                                error={Boolean(errors.brand)}
+                                helperText={errors.brand}
+                                disabled={!isAdmin}
+                                fullWidth
+                            >
+                                {brandsCtx.brands.map((item) => (
+                                    <MenuItem key={item.id} value={item.id}>
+                                        {item.brand}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
 
-                    <div className="form-group">
-                        <label htmlFor="price">Price</label>
-                        <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} />
-                    </div>
+                            <TextField
+                                label="Model"
+                                name="model"
+                                value={formData.model}
+                                onChange={handleChange}
+                                error={Boolean(errors.model)}
+                                helperText={errors.model}
+                                disabled={!isAdmin}
+                                fullWidth
+                            />
 
-                    <div className="form-group">
-                        <label htmlFor="fuelType">Fuel Type</label>
-                        <select id="fuelType" name="fuelType" value={formData.fuelType} onChange={handleChange}>
-                            <option value="">Select a fuel type</option>
-                            {fuelTypes.map((item) => (
-                                <option key={item.id} value={item.id} id={item.id}>
-                                    {item.brand}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                <TextField
+                                    label="Year"
+                                    name="year"
+                                    type="number"
+                                    value={formData.year}
+                                    onChange={handleChange}
+                                    error={Boolean(errors.year)}
+                                    helperText={errors.year}
+                                    disabled={!isAdmin}
+                                    fullWidth
+                                />
+                                <TextField
+                                    label="Price (EUR)"
+                                    name="price"
+                                    type="number"
+                                    value={formData.price}
+                                    onChange={handleChange}
+                                    error={Boolean(errors.price)}
+                                    helperText={errors.price}
+                                    disabled={!isAdmin}
+                                    fullWidth
+                                />
+                            </Stack>
 
-                    <div className="form-group">
-                        <label htmlFor="doors">Doors</label>
-                        <input type="number" id="doors" name="doors" value={formData.doors} onChange={handleChange} />
-                    </div>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                <TextField
+                                    select
+                                    label="Fuel type"
+                                    name="fuel_type"
+                                    value={formData.fuel_type}
+                                    onChange={handleChange}
+                                    error={Boolean(errors.fuel_type)}
+                                    helperText={errors.fuel_type}
+                                    disabled={!isAdmin}
+                                    fullWidth
+                                >
+                                    {FUEL_TYPES.map((item) => (
+                                        <MenuItem key={item.id} value={item.id}>
+                                            {item.type}
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
+                                <TextField
+                                    label="Doors"
+                                    name="doors"
+                                    type="number"
+                                    value={formData.doors}
+                                    onChange={handleChange}
+                                    error={Boolean(errors.doors)}
+                                    helperText={errors.doors}
+                                    disabled={!isAdmin}
+                                    fullWidth
+                                />
+                            </Stack>
 
-                    <div className="form-group">
-                        <label htmlFor="description">Description</label>
-                        <textarea id="description" name="description" value={formData.description} onChange={handleChange} />
-                    </div>
+                            <TextField
+                                label="Description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                disabled={!isAdmin}
+                                multiline
+                                minRows={4}
+                                fullWidth
+                            />
 
-                    <div className="form-group">
-                        <label htmlFor="imageUrl">Image URL</label>
-                        <input type="text" id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange} />
-                    </div>
+                            <TextField
+                                label="Image URL"
+                                name="image_url"
+                                value={formData.image_url}
+                                onChange={handleChange}
+                                disabled={!isAdmin}
+                                fullWidth
+                            />
 
-                    {/* <button className="text-button" type="submit">Submit</button> */}
-                    <Button
-                        variant='contained'
-                        color="secondary"
-                        disabled={!isAdmin}
-                        style={{
-                            marginLeft: 10,
-                            marginRight: 10,
-                        }}
-                        onClick={handleSubmit}
-                    >
-                        Submit
+                            <Stack direction="row" spacing={2}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    disabled={!isAdmin || isSaving}
+                                    startIcon={
+                                        isSaving
+                                            ? <CircularProgress size={18} color="inherit" />
+                                            : <SaveIcon />
+                                    }
+                                >
+                                    {isEdit ? 'Save changes' : 'Add vehicle'}
+                                </Button>
+
+                                {isEdit && (
+                                    <Button
+                                        type="button"
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<DeleteIcon />}
+                                        disabled={!isAdmin || isSaving}
+                                        onClick={() => setConfirmDelete(true)}
+                                    >
+                                        Delete
+                                    </Button>
+                                )}
+                            </Stack>
+                        </Stack>
+                    </Box>
+                </CardContent>
+            </Card>
+
+            <Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)}>
+                <DialogTitle>Delete this vehicle?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {formData.model} will be permanently removed. This cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDelete(false)}>Cancel</Button>
+                    <Button color="error" variant="contained" onClick={handleDelete}>
+                        Delete
                     </Button>
+                </DialogActions>
+            </Dialog>
 
-                </form>
-
-                {/* show only if we are editing an already existing vehicle */}
-                {isEdit &&
-                    <>
-                        <Box height={10} ></Box>
-                        <Button
-                            variant='contained'
-                            color="secondary"
-                            disabled={!isAdmin}
-                            style={{
-                                marginLeft: 10,
-                                marginRight: 10,
-                            }}
-                            onClick={handleDelete}
-                        >
-                            Delete
-                        </Button>
-                    </>}
-
-                <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-                    <Alert severity={snackbarMessage.includes('successful') ? 'success' : 'error'}>
-                        {snackbarMessage}
-                    </Alert>
-                </Snackbar>
-            </div>
-        </div>
+            <Snackbar
+                open={Boolean(feedback)}
+                autoHideDuration={6000}
+                onClose={() => setFeedback(null)}
+            >
+                {/* Severity comes from the result, not from parsing the message text. */}
+                <Alert
+                    severity={feedback?.severity || 'info'}
+                    variant="filled"
+                    onClose={() => setFeedback(null)}
+                >
+                    {feedback?.message}
+                </Alert>
+            </Snackbar>
+        </Container>
     );
 }
+
+export default Admin;

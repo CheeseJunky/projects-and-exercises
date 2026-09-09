@@ -1,114 +1,133 @@
-import { useLocation, useNavigate } from "react-router-dom"
-import { BrandsContext } from "../store/brands-context";
 import { useContext } from "react";
-import { Button } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CardMedia,
+    Chip,
+    Container,
+    Divider,
+    Stack,
+    Typography,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditIcon from "@mui/icons-material/Edit";
+
+import { BrandsContext } from "../store/brands-context";
 import { UserContext } from "../store/user-context";
+import { formatPrice, fuelTypeName } from "../util/constants";
+
+function DetailRow({ label, value }) {
+    return (
+        <Stack direction="row" spacing={2} sx={{ py: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 120 }}>
+                {label}
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {value}
+            </Typography>
+        </Stack>
+    );
+}
 
 export const DetailedScreen = () => {
     const location = useLocation();
     const vehicle = location.state;
+    const navigate = useNavigate();
 
     const brandsCtx = useContext(BrandsContext);
-    // get name of the brand from brands array
-    const brandName = brandsCtx.brands.find(brand => brand.id === vehicle.brand).brand;
+    const userCtx = useContext(UserContext);
 
-    const navigate = useNavigate();
-    function handleEditClick() {
-        navigate('/admin', { state: vehicle });
+    // Opening /details directly (refresh, bookmark) leaves the router state
+    // empty, which used to crash on the brand lookup.
+    if (!vehicle) {
+        return (
+            <Container maxWidth="md" sx={{ py: 3 }}>
+                <Alert
+                    severity="warning"
+                    action={
+                        <Button color="inherit" size="small" onClick={() => navigate('/')}>
+                            Back to list
+                        </Button>
+                    }
+                >
+                    No vehicle selected. Pick one from the list first.
+                </Alert>
+            </Container>
+        );
     }
 
-    // check users role and disable admin buttons
-    // role -> normal = 0, admin = 1
-    const userCtx = useContext(UserContext);
-    const isAdmin = userCtx.user.role === 1;
+    const brandName = brandsCtx.getBrandName(vehicle.brand);
 
     return (
-        <div className="container">
-            <div style={{
-                display: "flex",
-                flexDirection: "column"
-            }}>
-                <div className='vehicle-details'>
+        <Container maxWidth="md" sx={{ py: 3 }}>
+            <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate(-1)}
+                sx={{ mb: 2 }}
+            >
+                Back
+            </Button>
 
-                    {/* name + model */}
-                    <div style={{
-                        display: "flex",
-                        flexDirection: "row"
-                    }}>
-                        <label style={{
-                            fontWeight: "bold",
-                            fontSize: 30,
-                            marginRight: 10,
-                        }}>
-                            {brandName}
-                        </label>
-                        <label style={{
-                            fontWeight: "bold",
-                            fontSize: 24,
-                            display: "flex",
-                            alignItems: "flex-end"
-                        }}>
-                            {vehicle.model}
-                        </label>
-                    </div>
-
-                    {/* image */}
-                    <div>
-                        <img
-                            style={{
-                                marginTop: 10,
-                                height: 400,
-                                objectFit: "contain"
-                            }}
-                            src={vehicle.image_url}
-                            alt="Image of the car failed to load"
-                        />
-                    </div>
-
-                    {/* other info */}
-                    <div>
-                        <div className="info-group">
-                            <label className="info-label">Price:</label>
-                            <label className="info-value">{vehicle.price}€</label>
-                        </div>
-
-                        <div className="info-group">
-                            <label className="info-label">Year:</label>
-                            <label className="info-value">{vehicle.year}</label>
-                        </div>
-
-                        <div className="info-group">
-                            <label className="info-label">Fuel Type:</label>
-                            <label className="info-value">{vehicle.fuel_type}</label>
-                        </div>
-
-                        <div className="info-group">
-                            <label className="info-label">Doors:</label>
-                            <label className="info-value">{vehicle.doors}</label>
-                        </div>
-
-                        <div className="info-group">
-                            <label className="info-label">Description:</label>
-                            <label className="info-description">{vehicle.description}</label>
-                        </div>
-                    </div>
-
-                </div>
-                <div>
-                    <Button
-                        variant='contained'
-                        color="secondary"
-                        disabled={!isAdmin}
-                        style={{
-                            marginLeft: 10,
-                            marginRight: 10,
-                        }}
-                        onClick={handleEditClick}
+            <Card variant="outlined">
+                <CardMedia
+                    component="img"
+                    height="400"
+                    image={vehicle.image_url}
+                    alt={`${brandName} ${vehicle.model}`}
+                    sx={{ objectFit: 'contain', bgcolor: 'action.hover' }}
+                />
+                <CardContent>
+                    <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        justifyContent="space-between"
+                        alignItems={{ sm: 'baseline' }}
+                        spacing={1}
                     >
-                        Edit
-                    </Button>
-                </div>
-            </div>
-        </div>
+                        <Typography variant="h4" component="h1">
+                            {brandName}{' '}
+                            <Typography variant="h5" component="span" color="text.secondary">
+                                {vehicle.model}
+                            </Typography>
+                        </Typography>
+                        <Typography variant="h4" color="primary">
+                            {formatPrice(vehicle.price)}
+                        </Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+                        <Chip label={vehicle.year} />
+                        {/* fuel_type is a foreign key; show the name, not the id. */}
+                        <Chip label={fuelTypeName(vehicle.fuel_type)} />
+                        <Chip label={`${vehicle.doors} doors`} />
+                    </Stack>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    <Box>
+                        <DetailRow label="Year" value={vehicle.year} />
+                        <DetailRow label="Fuel type" value={fuelTypeName(vehicle.fuel_type)} />
+                        <DetailRow label="Doors" value={vehicle.doors} />
+                        <DetailRow label="Description" value={vehicle.description} />
+                    </Box>
+
+                    {userCtx.isAdmin && (
+                        <Button
+                            variant="contained"
+                            startIcon={<EditIcon />}
+                            onClick={() => navigate('/admin', { state: vehicle })}
+                            sx={{ mt: 2 }}
+                        >
+                            Edit
+                        </Button>
+                    )}
+                </CardContent>
+            </Card>
+        </Container>
     );
 }
+
+export default DetailedScreen;

@@ -1,63 +1,62 @@
-import React, { useContext } from 'react';
-import '../styles/styles.css';
+import React, { useContext, useMemo } from 'react';
+import { Alert, Skeleton, Stack } from '@mui/material';
+
 import VehicleListTile from './vehicle_tile';
 import { BrandsContext } from '../store/brands-context';
+import { SORT_OPTIONS } from '../util/constants';
 
-const VehicleList = ({ vehicles, sortOption }) => {
-  const sortedVehicles = vehicles.slice();
+const VehicleList = ({ vehicles, sortOption, loading = false }) => {
   const brandsCtx = useContext(BrandsContext);
+  const { getBrandName } = brandsCtx;
 
-  switch (sortOption) {
-    case 0: // Cheaper first
-      sortedVehicles.sort((a, b) => a.price - b.price);
-      break;
-    case 1: // Expensive first
-      sortedVehicles.sort((a, b) => b.price - a.price);
-      break;
-    case 2: // Brand A - Z
-      sortedVehicles.sort((a, b) => {
-        const brandA = brandsCtx.brands.find(brand => brand.id === a.brand);
-        const brandB = brandsCtx.brands.find(brand => brand.id === b.brand);
+  // Sorting only has to run when the list or the option actually changes.
+  const sortedVehicles = useMemo(() => {
+    const list = vehicles.slice();
 
-        // check if both brand ids are inside brandlist
-        if (!brandA || !brandB) {
-          return 0;
-        }
+    switch (sortOption) {
+      case SORT_OPTIONS.PRICE_ASC:
+        return list.sort((a, b) => a.price - b.price);
+      case SORT_OPTIONS.PRICE_DESC:
+        return list.sort((a, b) => b.price - a.price);
+      case SORT_OPTIONS.BRAND_ASC:
+        return list.sort((a, b) => getBrandName(a.brand).localeCompare(getBrandName(b.brand)));
+      case SORT_OPTIONS.BRAND_DESC:
+        return list.sort((a, b) => getBrandName(b.brand).localeCompare(getBrandName(a.brand)));
+      case SORT_OPTIONS.YEAR_DESC:
+        return list.sort((a, b) => b.year - a.year);
+      case SORT_OPTIONS.YEAR_ASC:
+        return list.sort((a, b) => a.year - b.year);
+      default:
+        return list;
+    }
+  }, [vehicles, sortOption, getBrandName]);
 
-        return brandA.brand.localeCompare(brandB.brand);
-      });
-      break;
-    case 3: // Brand Z - A
-      sortedVehicles.sort((a, b) => {
-        const brandA = brandsCtx.brands.find(brand => brand.id === a.brand);
-        const brandB = brandsCtx.brands.find(brand => brand.id === b.brand);
+  if (loading) {
+    return (
+      <Stack spacing={1.5} sx={{ width: '100%' }}>
+        {[...Array(4)].map((_, index) => (
+          <Skeleton key={index} variant="rounded" height={320} />
+        ))}
+      </Stack>
+    );
+  }
 
-        // check if both brand ids are inside brandlist
-        if (!brandA || !brandB) {
-          return 0;
-        }
-
-        return brandB.brand.localeCompare(brandA.brand);
-      });
-      break;
-    case 4: // Newer first
-      sortedVehicles.sort((a, b) => b.year - a.year);
-      break;
-    case 5: // Older first
-      sortedVehicles.sort((a, b) => a.year - b.year);
-      break;
-    default:
-      break;
+  if (sortedVehicles.length === 0) {
+    return (
+      <Alert severity="info" sx={{ width: '100%' }}>
+        No vehicles match the current filter.
+      </Alert>
+    );
   }
 
   return (
-    <ul className='vehicle-list'>
+    // The key belongs on the outermost element of each iteration; the previous
+    // fragment wrapper swallowed it and React re-created every tile.
+    <Stack spacing={1.5} sx={{ width: '100%' }}>
       {sortedVehicles.map((item) => (
-        <>
-          <VehicleListTile key={item.id} vehicle={item} />
-        </>
+        <VehicleListTile key={item.id} vehicle={item} />
       ))}
-    </ul>
+    </Stack>
   );
 };
 
